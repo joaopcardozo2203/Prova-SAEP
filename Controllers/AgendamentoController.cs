@@ -1,0 +1,198 @@
+
+using ClinicaVeterinaria.Data;
+using ClinicaVeterinaria.Models;
+using sistema.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using sistema.Models;
+using sistema.ViewModels;
+
+namespace ClinicaVeterinaria.Controllers;
+
+[Authorize]
+public class AgendamentosController : Controller
+{
+    private readonly AppDbContext _context;
+
+    public AgendamentosController(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var dados = await _context.Agendamentos
+            .AsNoTracking()
+            .Include(a => a.Tutor)
+            .Include(a => a.Pet)
+            .OrderBy(a => a.DataHora)
+            .ToListAsync();
+
+        return View(dados);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Create()
+    {
+        var vm = new AgendamentoFormViewModel
+        {
+            DataHora = DateTime.Now.AddHours(1)
+        };
+
+        await CarregarListas(vm);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(AgendamentoFormViewModel vm)
+    {
+        await ValidarRelacao(vm);
+
+        if (!ModelState.IsValid)
+        {
+            await CarregarListas(vm);
+            return View(vm);
+        }
+
+        var agendamento = new Agendamento
+        {
+            DataHora = vm.DataHora,
+            Motivo = vm.Motivo,
+            Status = vm.Status,
+            TutorId = vm.TutorId,
+            PetId = vm.PetId
+        };
+
+        _context.Agendamentos.Add(agendamento);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var agendamento = await _context.Agendamentos.FindAsync(id);
+
+        if (agendamento == null)
+            return NotFound();
+
+        var vm = new AgendamentoFormViewModel
+        {
+            Id = agendamento.Id,
+            DataHora = agendamento.DataHora,
+            Motivo = agendamento.Motivo,
+            Status = agendamento.Status,
+            TutorId = agendamento.TutorId,
+            PetId = agendamento.PetId
+        };
+
+        await CarregarListas(vm);
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, AgendamentoFormViewModel vm)
+    {
+        if (id != vm.Id)
+            return BadRequest();
+
+        await ValidarRelacao(vm);
+
+        if (!ModelState.IsValid)
+        {
+            await CarregarListas(vm);
+            return View(vm);
+        }
+
+        var agendamento = await _context.Agendamentos.FindAsync(id);
+
+        if (agendamento == null)
+            return NotFound();
+
+        agendamento.DataHora = vm.DataHora;
+        agendamento.Motivo = vm.Motivo;
+        agendamento.Status = vm.Status;
+        agendamento.TutorId = vm.TutorId;
+        agendamento.PetId = vm.PetId;
+
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var agendamento = await _context.Agendamentos.FindAsync(id);
+
+        if (agendamento == null)
+            return NotFound();
+
+        _context.Agendamentos.Remove(agendamento);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    private async Task ValidarRelacao(AgendamentoFormViewModel vm)
+    {
+        string[] statusPermitidos =
+        {
+            "Agendado",
+            "Concluído",
+            "Cancelado"
+        };
+
+        if (!statusPermitidos.Contains(vm.Status))
+        {
+            ModelState.AddModelError("Status", "Status inválido.");
+        }
+
+        if (vm.DataHora == default)
+        {
+            ModelState.AddModelError("DataHora", "Informe data e hora válidas.");
+        }
+
+        bool tutorExiste = await _context.Tutores
+            .AnyAsync(t => t.Id == vm.TutorId);
+
+        bool petDoTutor = await _context.Pets
+            .AnyAsync(p => p.Id == vm.PetId && p.TutorId == vm.TutorId);
+
+        if (!tutorExiste)
+        {
+            ModelState.AddModelError("TutorId", "Tutor inválido.");
+        }
+
+        if (!petDoTutor)
+        {
+            ModelState.AddModelError(
+                "PetId",
+                "O pet selecionado não pertence ao tutor selecionado."
+            );
+        }
+    }
+
+    private async Task CarregarListas(AgendamentoFormViewModel vm)
+    {
+        vm.Tutores = await _context.Tutores
+            .OrderBy(t => t.Nome)
+            .Select(t => new SelectListItem(t.Nome, t.Id.ToString()))
+            .ToListAsync();
+
+        vm.Pets = await _context.Pets
+            .Include(p => p.Tutor)
+            .OrderBy(p => p.Nome)
+            .Select(p => new SelectListItem(
+                p.Nome + " - " + p.Tutor.Nome,
+                p.Id.ToString()
+            ))
+            .ToListAsync();
+    }
+}

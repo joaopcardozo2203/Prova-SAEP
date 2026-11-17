@@ -1,0 +1,71 @@
+Documentação – Clínica Veterinária
+Aluno: João Pedro Vieira Cardozo
+Data: 17/11/2026
+
+1. Requisitos funcionais
+Fazer login com e-mail e senha.
+Avisar quando os dados de login estiverem incorretos.
+Encerrar a sessão depois de 30 minutos.
+Cadastrar, editar, pesquisar e excluir tutores.
+Cadastrar, editar e excluir pets.
+Vincular os pets aos seus tutores.
+Cadastrar e alterar agendamentos.
+Mostrar os agendamentos organizados por data.
+Exibir os dados dos tutores e dos pets.
+2. Requisitos não funcionais
+O sistema deve ser fácil de usar.
+Os dados devem ficar salvos no banco.
+As informações pessoais devem ser protegidas.
+O sistema deve funcionar corretamente.
+Deve ter uma organização básica no código.
+3. Regras de negócio
+Só pode acessar o sistema quem estiver logado.
+O login deve ser feito com e-mail e senha.
+A sessão expira depois de 30 minutos.
+O CPF deve ser criptografado.
+Todo pet precisa ter um tutor.
+Todo agendamento precisa estar relacionado a um tutor e um pet.
+Os agendamentos devem aparecer por ordem de data e horário.
+Cada tabela de negócio deve ter pelo menos três registros.
+4. Tecnologias utilizadas
+As tecnologias utilizadas no projeto foram:
+C#
+ASP.NET Core MVC (.NET 8)
+SQL Server
+Entity Framework Core
+HTML
+CSS
+Bootstrap
+BCrypt
+Data Protection
+5. Banco de dados
+O banco de dados possui quatro tabelas principais:
+Usuarios: armazena os dados de acesso.
+Tutores: armazena os dados dos responsáveis pelos animais.
+Pets: armazena os dados dos animais.
+Agendamentos: armazena as informações das consultas.
+As tabelas possuem relacionamentos para manter os dados conectados.
+6. Relacionamentos
+Os relacionamentos do banco são:
+Um tutor pode ter vários pets.
+Um tutor pode ter vários agendamentos.
+Um pet pode ter vários agendamentos.
+Cada pet pertence a um tutor.
+Cada agendamento possui um tutor e um pet.
+7. Segurança
+Para proteger os dados, utilizei o BCrypt para as senhas e o Data Protection para criptografar os CPFs.
+Também foi configurado o login com cookies e o tempo de sessão de 30 minutos.
+Essas medidas ajudam a proteger as informações dos usuários e tutores.
+8. Como executar
+Para executar o projeto, é necessário ter o .NET 8 e o SQL Server instalados.
+Depois, é preciso configurar a conexão com o banco de dados, executar as migrations e iniciar a aplicação.
+9. Testes
+As principais verificações do sistema são:
+Testar o login.
+Verificar a expiração da sessão.
+Testar o cadastro e a edição de tutores.
+Testar o cadastro de pets.
+Verificar o vínculo entre pets e tutores.
+Testar os agendamentos.
+Conferir os dados no banco de dados.
+
